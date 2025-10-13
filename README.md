@@ -25,3 +25,4 @@ No guardes la **service key** en el front. Solo `anon key` + RLS activo. Configu
 
 ## Limpieza de Service Worker
 Si venías de otra versión, en Chrome: DevTools → Application → Service Workers → *Unregister* y Clear storage.
+## Sitio web en GitHub Pages
