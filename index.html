@@ -1,33 +1,1186 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sitio en Mantenimiento</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-        }
-        .container {
-            padding: 40px;
-        }
-        h1 { font-size: 3em; margin-bottom: 20px; }
-        p { font-size: 1.2em; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intercambio Libros Madrid</title>
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#8B6941">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ILM">
+<link rel="apple-touch-icon" href="/icon-192.png">
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --primary-wood:#8B6941;
+  --primary-accent:#9B7653;
+  --primary-soft:#F5E6D3;
+  --primary-pale:#FAF4ED;
+  --text-primary:#3E2723;
+  --text-secondary:#5D4037;
+  --text-hint:#BCAAA4;
+  --surface:#fff;
+  --bg:#FBF7F3;
+  --success:#5D8A5D;
+  --warning:#CC7A00;
+  --error:#B85450;
+  --shadow:0 2px 10px rgba(139,105,65,.18);
+  --radius:12px;
+  --space:.75rem;
+  --space-lg:1.25rem;
+  --space-xl:1.75rem;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text-primary)}
+
+.auth-wrapper{min-height:100vh;display:grid;place-items:center;padding:var(--space-xl)}
+.auth-card{max-width:460px;width:100%;background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:var(--space-xl)}
+.auth-title{margin:0 0 var(--space);display:flex;gap:.6rem;align-items:center;font-weight:800;color:var(--primary-wood)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-group{margin-bottom:var(--space)}
+.form-label{display:block;font-size:.9rem;margin-bottom:.35rem;color:var(--text-secondary)}
+.form-input,.form-select,.form-textarea{width:100%;border:1px solid var(--primary-soft);background:#fff;padding:.75rem .8rem;border-radius:10px;outline:none}
+.form-textarea{min-height:84px;resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:10px;padding:.8rem 1rem;gap:.5rem;cursor:pointer;box-shadow:var(--shadow);font-weight:600}
+.btn:disabled{opacity:.7;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--primary-wood),var(--primary-accent));color:#fff}
+.btn-secondary{background:#fff;border:1px solid var(--primary-soft)}
+.btn-text{background:transparent;border:none;color:var(--primary-wood);cursor:pointer;padding:.4rem;text-decoration:underline}
+.hint{font-size:.85rem;color:var(--text-hint)}
+.divider{height:1px;background:var(--primary-soft);margin:var(--space-lg) 0}
+
+.app-container{max-width:960px;margin:0 auto;padding-bottom:110px}
+.app-header{position:sticky;top:0;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:var(--space);z-index:20;border-bottom:1px solid var(--primary-soft)}
+.logo{display:flex;gap:.6rem;align-items:center;font-weight:800;color:var(--primary-wood)}
+.header-actions{display:flex;align-items:center;gap:.5rem}
+.points{display:inline-flex;gap:.4rem;align-items:center;background:var(--primary-soft);padding:.35rem .6rem;border-radius:999px}
+.notification-btn,.profile-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--primary-soft);background:#fff;display:grid;place-items:center;cursor:pointer}
+
+/* Contador de notificaciones */
+.notification-btn{position:relative}
+.notification-badge{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  background:#e53935;
+  color:#fff;
+  border-radius:999px;
+  min-width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  font-size:.7rem;
+  font-weight:700;
+  padding:0 4px;
+  box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+
+.nav-tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--primary-soft);display:grid;grid-template-columns:repeat(4,1fr);z-index:20}
+.nav-tab{padding:.55rem 0;display:grid;place-items:center;border:none;background:#fff;color:var(--text-secondary);gap:.25rem;cursor:pointer}
+.nav-tab.active{color:var(--primary-wood);font-weight:700}
+.main-content{padding:var(--space)}
+.page{display:none}
+.page.active{display:block}
+
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem}
+.book-card{background:#fff;border:1px solid var(--primary-soft);border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
+.book-card:hover{transform:translateY(-2px)}
+.book-cover{height:160px;background:linear-gradient(135deg,var(--primary-wood),var(--primary-accent));display:grid;place-items:center;color:#fff;position:relative}
+.book-cover img{width:100%;height:100%;object-fit:cover}
+.book-info{padding:.7rem}
+.book-title{font-weight:700;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.book-author{font-size:.9rem;color:var(--text-secondary)}
+.badge{display:inline-block;border-radius:999px;padding:.15rem .5rem;background:var(--primary-soft);font-size:.75rem}
+
+#matchContainer .book-title, #matchContainer .book-author{color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+
+.empty{border:1px dashed var(--primary-soft);border-radius:12px;padding:2rem;text-align:center;color:var(--text-secondary);background:#fff}
+.empty i{font-size:2rem;margin-bottom:.5rem;color:var(--primary-wood)}
+
+.toast{position:fixed;top:84px;left:50%;transform:translateX(-50%);background:var(--primary-wood);color:#fff;border-radius:999px;padding:.6rem 1rem;z-index:9999;box-shadow:var(--shadow);font-weight:600}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--error)}
+.toast.warning{background:var(--warning)}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding:6vh var(--space);overflow-y:auto}
+.modal.active{display:flex}
+.modal-card{max-width:560px;width:100%;background:#fff;border-radius:14px;padding:var(--space-lg);box-shadow:var(--shadow);max-height:calc(100vh - 12vh);overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.close{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--text-secondary)}
+body.modal-open{overflow:hidden}
+
+.uploader-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin:.5rem 0 0}
+.upload-card{border:2px dashed var(--primary-soft);border-radius:12px;background:#fff8f1;min-height:120px;padding:.6rem;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.35rem;position:relative;overflow:hidden;cursor:pointer}
+.upload-card.required{background:#fff3e0}
+.upload-card .preview{position:absolute;inset:0;background-size:cover;background-position:center;border-radius:10px;opacity:.95;display:none}
+.upload-card.has-image .preview{display:block}
+.upload-card .overlay{position:absolute;inset:auto 6px 6px auto;background:rgba(0,0,0,.55);color:#fff;padding:.15rem .35rem;border-radius:8px;font-size:.7rem;display:none}
+.upload-card.has-image .overlay{display:block}
+.upload-card button.remove{position:absolute;top:6px;right:6px;background:#fff;border:1px solid var(--primary-soft);border-radius:10px;width:28px;height:28px;display:grid;place-items:center;cursor:pointer}
+
+.password-wrap{position:relative}
+.password-wrap .toggle-eye{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);border:1px solid var(--primary-soft);background:#fff;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;cursor:pointer;color:var(--text-secondary)}
+.pw-hint{font-size:.8rem;color:var(--text-hint);margin-top:.35rem}
+.pw-checklist{margin:.35rem 0 0;padding:0;list-style:none;font-size:.85rem}
+.pw-checklist li{display:flex;align-items:center;gap:.4rem;color:#9a877a}
+.pw-checklist li.ok{color:#4c8b4c}
+.pw-checklist i{width:16px;text-align:center}
+
+.exchange-card{background:#fff;border:1px solid var(--primary-soft);border-radius:12px;padding:1rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
+.zone-badge{display:inline-block;background:var(--primary-accent);color:#fff;padding:.25rem .5rem;border-radius:999px;font-size:.75rem;font-weight:600}
+.card{background:#fff;border:1px solid var(--primary-soft);border-radius:12px;padding:1rem;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* WhatsApp status indicators */
+.whatsapp-status{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;border-radius:999px;font-size:0.85rem;font-weight:600}
+.whatsapp-status.connected{background:#E8F5E9;color:#2E7D32}
+.whatsapp-status.disconnected{background:#FFF3E0;color:#E65100}
+.whatsapp-phone-display{display:inline-flex;align-items:center;gap:0.5rem;background:var(--primary-soft);padding:0.5rem 0.75rem;border-radius:8px;font-family:monospace;font-weight:600;color:var(--primary-wood)}
+
+.notification-settings{display:grid;gap:0.75rem;margin:1rem 0}
+.notification-toggle{display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--primary-pale);border-radius:8px}
+.notification-toggle input[type="checkbox"]{width:20px;height:20px;cursor:pointer}
+
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1rem}
+.group-card{background:#fff;border:1px solid var(--primary-soft);border-radius:12px;padding:1rem;box-shadow:var(--shadow);transition:transform 0.2s}
+.group-card:hover{transform:translateY(-2px)}
+
+/* Panel de notificaciones */
+.notifications-panel{
+  position:fixed;
+  top:70px;
+  right:10px;
+  width:90%;
+  max-width:380px;
+  max-height:70vh;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+  display:none;
+  flex-direction:column;
+  z-index:100;
+}
+.notifications-panel.active{display:flex}
+.notifications-header{
+  padding:1rem;
+  border-bottom:1px solid var(--primary-soft);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.notifications-body{flex:1;overflow-y:auto;padding:0}
+.notification-item{
+  padding:1rem;
+  border-bottom:1px solid var(--primary-soft);
+  cursor:pointer;
+  transition:background .15s;
+}
+.notification-item:hover{background:var(--primary-pale)}
+.notification-item.unread{background:#FFF9F0;border-left:3px solid var(--primary-wood)}
+.notification-item .title{font-weight:600;margin-bottom:.25rem}
+.notification-item .message{font-size:.9rem;color:var(--text-secondary);margin-bottom:.25rem}
+.notification-item .time{font-size:.75rem;color:var(--text-hint)}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔧 En Mantenimiento</h1>
-        <p>Estamos trabajando en mejorar tu experiencia.</p>
-        <p>Volveremos pronto.</p>
+
+<!-- AUTH -->
+<div id="auth" class="auth-wrapper">
+  <div class="auth-card">
+    <h2 class="auth-title"><i class="fas fa-book-open"></i> Intercambio Libros Madrid</h2>
+
+    <div id="loginView">
+      <form onsubmit="Auth.handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input id="loginEmail" type="email" class="form-input" autocomplete="email" placeholder="tucorreo@dominio.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <div class="password-wrap">
+            <input id="loginPassword" type="password" class="form-input" autocomplete="current-password" placeholder="********">
+            <button type="button" class="toggle-eye" onclick="PasswordUI.toggle('loginPassword',this)"><i class="far fa-eye"></i></button>
+          </div>
+        </div>
+        <button id="loginBtn" type="submit" class="btn btn-primary" style="width:100%"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</button>
+      </form>
+      <div style="display:flex;justify-content:space-between;margin-top:var(--space)">
+        <button class="btn-text" onclick="Views.show('resetView')">¿Olvidaste la contraseña?</button>
+        <button class="btn-text" onclick="Views.show('signupView')">Crear cuenta</button>
+      </div>
     </div>
+
+    <div id="signupView" style="display:none">
+      <form onsubmit="Auth.handleSignup(event)">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Nombre completo</label><input id="signupName" class="form-input" placeholder="Tu nombre"></div>
+          <div class="form-group"><label class="form-label">Zona</label>
+            <select id="signupZone" class="form-select">
+              <option value="">Selecciona</option>
+              <option value="centro">Centro</option><option value="norte">Norte</option><option value="sur">Sur</option><option value="este">Este</option><option value="oeste">Oeste</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label><input id="signupEmail" type="email" class="form-input" placeholder="tucorreo@dominio.com"></div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <div class="password-wrap">
+            <input id="signupPassword" type="password" class="form-input" autocomplete="new-password" placeholder="********">
+            <button type="button" class="toggle-eye" onclick="PasswordUI.toggle('signupPassword',this)"><i class="far fa-eye"></i></button>
+          </div>
+          <ul id="signupPwRules" class="pw-checklist">
+            <li><i class="far fa-circle"></i> 8+ caracteres</li>
+            <li><i class="far fa-circle"></i> Una mayúscula</li>
+            <li><i class="far fa-circle"></i> Una minúscula</li>
+            <li><i class="far fa-circle"></i> Un número</li>
+            <li><i class="far fa-circle"></i> Un símbolo</li>
+          </ul>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Repite contraseña</label>
+          <div class="password-wrap">
+            <input id="signupConfirm" type="password" class="form-input" autocomplete="new-password" placeholder="********">
+            <button type="button" class="toggle-eye" onclick="PasswordUI.toggle('signupConfirm',this)"><i class="far fa-eye"></i></button>
+          </div>
+        </div>
+        <button id="signupBtn" type="submit" class="btn btn-primary" style="width:100%"><i class="fas fa-user-plus"></i> Crear cuenta</button>
+      </form>
+      <div style="text-align:center;margin-top:var(--space)"><button class="btn-text" onclick="Views.show('loginView')">Volver</button></div>
+    </div>
+
+    <div id="resetView" style="display:none">
+      <form onsubmit="Auth.handleReset(event)">
+        <div class="form-group"><label class="form-label">Email</label><input id="resetEmail" type="email" class="form-input" placeholder="tucorreo@dominio.com"></div>
+        <button id="resetBtn" type="submit" class="btn btn-primary" style="width:100%"><i class="fas fa-envelope"></i> Enviar correo</button>
+      </form>
+      <div style="text-align:center;margin-top:var(--space)"><button class="btn-text" onclick="Views.show('loginView')">Volver</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app-container" style="display:none">
+  <header class="app-header">
+    <div class="logo"><i class="fas fa-map-marker-alt"></i><span>ILM</span></div>
+    <div class="header-actions">
+      <div class="points"><i class="fas fa-ticket-alt"></i> <span id="userCredits">0</span></div>
+      <button class="notification-btn" onclick="Notifications.toggle()"><i class="fas fa-bell"></i><span id="notificationBadge" class="notification-badge" style="display:none">0</span></button>
+      <button class="profile-btn" onclick="Auth.handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </header>
+
+  <!-- Panel de Notificaciones -->
+  <div id="notificationsPanel" class="notifications-panel">
+    <div class="notifications-header">
+      <h4 style="margin:0">Notificaciones</h4>
+      <button onclick="Notifications.markAllRead()" class="btn-text" style="font-size:.85rem">Marcar todas leídas</button>
+    </div>
+    <div id="notificationsBody" class="notifications-body">
+      <div class="empty"><i class="fas fa-bell"></i><div>No hay notificaciones</div></div>
+    </div>
+  </div>
+
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-tab="matches" onclick="UI.showTab('matches')"><i class="fas fa-heart"></i><span>Matches</span></button>
+    <button class="nav-tab" data-tab="library" onclick="UI.showTab('library')"><i class="fas fa-book"></i><span>Biblioteca</span></button>
+    <button class="nav-tab" data-tab="community" onclick="UI.showTab('community')"><i class="fas fa-users"></i><span>Comunidad</span></button>
+    <button class="nav-tab" data-tab="profile" onclick="UI.showTab('profile')"><i class="fas fa-user"></i><span>Perfil</span></button>
+  </nav>
+
+  <main class="main-content">
+    <section id="matches" class="page active">
+      <h3>Matches Disponibles</h3>
+      <div id="matchContainer" class="books-grid"><div class="empty"><i class="fas fa-book-reader"></i><div>Cargando...</div></div></div>
+    </section>
+
+    <section id="library" class="page">
+      <h3>Mi Biblioteca</h3>
+      <button id="userAddBookBtn" class="btn btn-primary" style="width:100%;margin-bottom:.75rem" onclick="Modals.openAddBook()"><i class="fas fa-plus"></i> Añadir libro</button>
+      <div id="libraryGrid" class="books-grid"><div class="empty"><i class="fas fa-book"></i><div>Cargando...</div></div></div>
+    </section>
+
+    <section id="community" class="page">
+      <h3>Comunidad</h3>
+      <h4>Intercambios Activos</h4>
+      <div id="exchangeList"><div class="empty"><i class="fas fa-handshake"></i><div>Cargando...</div></div></div>
+      <div id="discoveryCard" class="card" style="margin:1.5rem 0"></div>
+      <h4>Grupos Disponibles</h4>
+      <div id="availableGroupsList" class="groups-grid"></div>
+    </section>
+
+    <section id="profile" class="page">
+      <h3>Mi Perfil</h3>
+      <div id="profileContent"><div class="empty"><i class="fas fa-user"></i><div>Cargando...</div></div></div>
+    </section>
+  </main>
+</div>
+
+<!-- WhatsApp Config Modal -->
+<div id="whatsappConfigModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3><i class="fab fa-whatsapp"></i> Configurar WhatsApp</h3><button class="close" onclick="Modals.close('whatsappConfigModal')">×</button></div>
+    <div>
+      <div class="form-group">
+        <label class="form-label">Número de WhatsApp (con código país)</label>
+        <input id="whatsappPhone" class="form-input" type="tel" placeholder="+34612345678" pattern="\+?[0-9]{9,15}">
+        <div class="hint" style="margin-top:.5rem">
+          <i class="fas fa-info-circle"></i> Ejemplo: +34612345678 (incluye + y código de país)
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">¿Hacer público mi WhatsApp?</label>
+        <div class="notification-toggle">
+          <span>Otros usuarios podrán contactarme directamente</span>
+          <input type="checkbox" id="whatsappPublic">
+        </div>
+        <div class="hint">Si es privado, solo compartirás tu número al iniciar un intercambio</div>
+      </div>
+
+      <div class="notification-settings">
+        <h4 style="margin:.75rem 0 .5rem">Recibir notificaciones por WhatsApp:</h4>
+        <div class="notification-toggle">
+          <span><i class="fas fa-heart"></i> Nuevos matches</span>
+          <input type="checkbox" id="notifyMatches" checked>
+        </div>
+        <div class="notification-toggle">
+          <span><i class="fas fa-handshake"></i> Intercambios aceptados</span>
+          <input type="checkbox" id="notifyExchanges" checked>
+        </div>
+        <div class="notification-toggle">
+          <span><i class="fas fa-check-circle"></i> Confirmaciones</span>
+          <input type="checkbox" id="notifyConfirmations" checked>
+        </div>
+      </div>
+
+      <button id="saveWhatsAppBtn" class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="WhatsApp.saveConfig()"><i class="fas fa-save"></i> Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Book Modal (simplificado) -->
+<div id="addBookModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Añadir Libro</h3><button class="close" onclick="Modals.close('addBookModal')">×</button></div>
+    <div>
+      <div class="form-group"><label class="form-label">Título</label><input id="bookTitle" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Autor</label><input id="bookAuthor" class="form-input"></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Género</label>
+          <select id="bookGenre" class="form-select">
+            <option value="">Selecciona</option>
+            <option value="ficcion">Ficción</option><option value="no-ficcion">No ficción</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Estado</label>
+          <select id="bookCondition" class="form-select">
+            <option value="">Selecciona</option>
+            <option value="nuevo">Nuevo</option><option value="excelente">Excelente</option><option value="bueno">Bueno</option>
+          </select>
+        </div>
+      </div>
+      <button id="saveBookBtn" class="btn btn-primary" style="width:100%" onclick="Books.save()"><i class="fas fa-save"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exchange Modal -->
+<div id="exchangeModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3><i class="fas fa-handshake"></i> Proponer intercambio</h3><button class="close" onclick="Modals.close('exchangeModal')">×</button></div>
+    <div>
+      <div class="form-group">
+        <label class="form-label">Tu libro (opcional)</label>
+        <select id="offerBookSelect" class="form-select">
+          <option value="">Donar (+1 crédito)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mensaje</label>
+        <textarea id="exchangeNote" class="form-textarea" placeholder="Mensaje opcional..."></textarea>
+      </div>
+      <button id="createExchangeBtn" class="btn btn-primary" style="width:100%" onclick="Exchange.create()"><i class="fas fa-paper-plane"></i> Enviar propuesta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ffhxdbjejzxiwbfpnfur.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmaHhkYmplanp4aXdiZnBuZnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNzQyMDYsImV4cCI6MjA3NDY1MDIwNn0.HdJM0jYHw8o6rxHCTYvh-vXXFS8s4ncViVMsOcgb9gg";
+
+let supabaseClient = null;
+let currentUser = null;
+let userBooks = [];
+let matches = [];
+
+const toast = (type, msg) => {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+};
+
+function initializeSupabase() {
+  try {
+    if (SUPABASE_URL.includes('TU_SUPABASE')) return false;
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+window.Views = {
+  show(id) {
+    ['loginView','signupView','resetView'].forEach(v => {
+      const el = document.getElementById(v);
+      if (el) el.style.display = (v === id ? 'block' : 'none');
+    });
+  }
+};
+
+const PasswordUI = {
+  toggle(inputId, btn) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.type = (el.type === 'password' ? 'text' : 'password');
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = (el.type === 'password' ? 'far fa-eye' : 'far fa-eye-slash');
+  },
+  attachChecklist(inputId, listId) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    if (!input || !list) return;
+    const items = [...list.querySelectorAll('li')];
+    const icons = [...list.querySelectorAll('li i')];
+    const paint = () => {
+      const v = input.value;
+      const checks = [v.length >= 8, /[A-Z]/.test(v), /[a-z]/.test(v), /\d/.test(v), /[^A-Za-z0-9]/.test(v)];
+      checks.forEach((ok, i) => {
+        if (items[i] && icons[i]) {
+          items[i].classList.toggle('ok', ok);
+          icons[i].className = ok ? 'fas fa-check-circle' : 'far fa-circle';
+        }
+      });
+    };
+    input.addEventListener('input', paint);
+    paint();
+  }
+};
+
+const Auth = {
+  async handleLogin(e) {
+    e.preventDefault();
+    if (!supabaseClient) return toast('error', 'Sistema no disponible');
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+    try {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast('success', '¡Bienvenido!');
+    } catch (err) {
+      toast('error', 'Error al iniciar sesión');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar sesión';
+    }
+  },
+  async handleSignup(e) {
+    e.preventDefault();
+    if (!supabaseClient) return toast('error', 'Sistema no disponible');
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const zone = document.getElementById('signupZone').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirm').value;
+    if (!name || !email || !zone || !password) return toast('warning', 'Completa todos los campos');
+    if (password !== confirm) return toast('warning', 'Las contraseñas no coinciden');
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+    try {
+      const { error } = await supabaseClient.auth.signUp({
+        email, password,
+        options: { data: { full_name: name, zone } }
+      });
+      if (error) throw error;
+      toast('success', 'Cuenta creada');
+      Views.show('loginView');
+    } catch (err) {
+      toast('error', 'Error al crear cuenta');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> Crear cuenta';
+    }
+  },
+  async handleReset(e) {
+    e.preventDefault();
+    toast('info', 'Función de recuperación disponible próximamente');
+  },
+  async handleLogout() {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+    toast('info', 'Sesión cerrada');
+    location.reload();
+  }
+};
+
+const UI = {
+  showTab(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById(id);
+    if (page) page.classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    if (id === 'library') Books.loadMine();
+    if (id === 'matches') Matches.load();
+    if (id === 'community') { Exchange.list(); CommunityManager.loadAdaptive(); }
+    if (id === 'profile') Profile.load();
+  }
+};
+
+const Modals = {
+  openAddBook() {
+    if (!currentUser) return toast('info', 'Inicia sesión');
+    document.getElementById('addBookModal').classList.add('active');
+    document.body.classList.add('modal-open');
+  },
+  close(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('active');
+    if (!document.querySelector('.modal.active')) document.body.classList.remove('modal-open');
+  }
+};
+
+/* ===== SISTEMA DE NOTIFICACIONES ===== */
+const Notifications = {
+  unreadCount: 0,
+  list: [],
+  
+  async load() {
+    if (!currentUser || !supabaseClient) return;
+    try {
+      const { data } = await supabaseClient
+        .from('notifications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      this.list = data || [];
+      this.updateBadge();
+      this.render();
+    } catch (e) {
+      console.error('Error loading notifications:', e);
+    }
+  },
+  
+  updateBadge() {
+    this.unreadCount = this.list.filter(n => !n.read).length;
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+      if (this.unreadCount > 0) {
+        badge.textContent = this.unreadCount > 9 ? '9+' : this.unreadCount;
+        badge.style.display = 'grid';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  },
+  
+  render() {
+    const body = document.getElementById('notificationsBody');
+    if (!body) return;
+    if (this.list.length === 0) {
+      body.innerHTML = '<div class="empty"><i class="fas fa-bell"></i><div>No hay notificaciones</div></div>';
+      return;
+    }
+    body.innerHTML = this.list.map(n => `
+      <div class="notification-item ${n.read ? '' : 'unread'}" onclick="Notifications.markRead('${n.id}')">
+        <div class="title">${n.title || 'Notificación'}</div>
+        <div class="message">${n.message || ''}</div>
+        <div class="time">${new Date(n.created_at).toLocaleString()}</div>
+      </div>
+    `).join('');
+  },
+  
+  toggle() {
+    const panel = document.getElementById('notificationsPanel');
+    if (!panel) return;
+    const isActive = panel.classList.contains('active');
+    if (isActive) {
+      panel.classList.remove('active');
+    } else {
+      panel.classList.add('active');
+      this.load();
+    }
+  },
+  
+  async markRead(id) {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+      await this.load();
+    } catch (e) {
+      console.error('Error marking as read:', e);
+    }
+  },
+  
+  async markAllRead() {
+    if (!currentUser || !supabaseClient) return;
+    try {
+      await supabaseClient
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', currentUser.id);
+      await this.load();
+      toast('success', 'Notificaciones marcadas como leídas');
+    } catch (e) {
+      console.error('Error marking all as read:', e);
+    }
+  },
+  
+  async create(userId, type, title, message, metadata = null) {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          type,
+          title,
+          message,
+          metadata,
+          read: false
+        });
+      
+      if (userId === currentUser?.id) {
+        await this.load();
+      }
+    } catch (e) {
+      console.error('Error creating notification:', e);
+    }
+  }
+};
+
+/* ===== WHATSAPP INTEGRATION ===== */
+const WhatsApp = {
+  config: JSON.parse(localStorage.getItem('whatsappConfig') || '{"phone":"","public":false,"notifications":{"matches":true,"exchanges":true,"confirmations":true},"connected":false}'),
+  
+  save(v) {
+    this.config = v;
+    localStorage.setItem('whatsappConfig', JSON.stringify(v));
+  },
+  
+  openConfig() {
+    if (!currentUser) return toast('info', 'Inicia sesión');
+    const phoneEl = document.getElementById('whatsappPhone');
+    const publicEl = document.getElementById('whatsappPublic');
+    const notifyMatchesEl = document.getElementById('notifyMatches');
+    const notifyExchangesEl = document.getElementById('notifyExchanges');
+    const notifyConfirmationsEl = document.getElementById('notifyConfirmations');
+    
+    if (phoneEl) phoneEl.value = this.config.phone || '';
+    if (publicEl) publicEl.checked = !!this.config.public;
+    if (notifyMatchesEl) notifyMatchesEl.checked = !!this.config.notifications?.matches;
+    if (notifyExchangesEl) notifyExchangesEl.checked = !!this.config.notifications?.exchanges;
+    if (notifyConfirmationsEl) notifyConfirmationsEl.checked = !!this.config.notifications?.confirmations;
+    
+    document.getElementById('whatsappConfigModal').classList.add('active');
+    document.body.classList.add('modal-open');
+  },
+  
+  async saveConfig() {
+    const phoneEl = document.getElementById('whatsappPhone');
+    const publicEl = document.getElementById('whatsappPublic');
+    const notifyMatchesEl = document.getElementById('notifyMatches');
+    const notifyExchangesEl = document.getElementById('notifyExchanges');
+    const notifyConfirmationsEl = document.getElementById('notifyConfirmations');
+    
+    const phone = (phoneEl?.value || '').trim();
+    if (!phone || phone.length < 10) return toast('warning', 'Introduce un número válido');
+    
+    this.save({
+      phone,
+      public: publicEl?.checked || false,
+      notifications: {
+        matches: notifyMatchesEl?.checked || false,
+        exchanges: notifyExchangesEl?.checked || false,
+        confirmations: notifyConfirmationsEl?.checked || false
+      },
+      connected: true
+    });
+    
+    try {
+      if (currentUser && supabaseClient) {
+        await supabaseClient
+          .from('profiles')
+          .update({
+            whatsapp_phone: phone,
+            whatsapp_public: publicEl?.checked || false,
+            whatsapp_notifications: this.config.notifications
+          })
+          .eq('id', currentUser.id);
+      }
+      toast('success', 'WhatsApp configurado');
+      Modals.close('whatsappConfigModal');
+      Profile.load();
+    } catch (e) {
+      toast('error', 'Error al guardar');
+    }
+  },
+  
+  async sendNotification(userId, type, message) {
+    try {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('whatsapp_phone, whatsapp_notifications')
+        .eq('id', userId)
+        .single();
+      
+      if (!profile?.whatsapp_phone) return false;
+      
+      const notifKey = type.includes('match') ? 'matches' : 
+                      type.includes('exchange') ? 'exchanges' : 'confirmations';
+      
+      if (!profile.whatsapp_notifications?.[notifKey]) return false;
+      
+      await Notifications.create(userId, type, 'Notificación ILM', message);
+      
+      return true;
+    } catch (e) {
+      console.error('WhatsApp notification error:', e);
+      return false;
+    }
+  },
+  
+  message(phone, text) {
+    try {
+      const cleanPhone = phone.replace(/[^0-9+]/g, '');
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+      toast('info', 'Abriendo WhatsApp...');
+    } catch (e) {
+      toast('error', 'Error al abrir WhatsApp');
+    }
+  },
+  
+  joinGroup(inviteLink) {
+    try {
+      window.open(inviteLink, '_blank');
+      toast('info', 'Abriendo grupo en WhatsApp...');
+    } catch (e) {
+      toast('error', 'Error al abrir grupo');
+    }
+  }
+};
+
+const Books = {
+  async save() {
+    if (!currentUser) return toast('error', 'No autenticado');
+    const title = document.getElementById('bookTitle').value;
+    const author = document.getElementById('bookAuthor').value;
+    const genre = document.getElementById('bookGenre').value;
+    const condition = document.getElementById('bookCondition').value;
+    if (!title || !author || !genre || !condition) return toast('warning', 'Completa todos los campos');
+    
+    const btn = document.getElementById('saveBookBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
+    try {
+      const { error } = await supabaseClient
+        .from('books')
+        .insert({
+          user_id: currentUser.id,
+          title, author, genre, condition,
+          is_available: true
+        });
+      if (error) throw error;
+      toast('success', 'Libro guardado');
+      Modals.close('addBookModal');
+      Books.loadMine();
+      
+      await Notifications.create(currentUser.id, 'book_added', 'Libro añadido', `Has añadido "${title}" a tu biblioteca`);
+    } catch (e) {
+      toast('error', 'Error al guardar');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+    }
+  },
+  
+  async loadMine() {
+    if (!currentUser || !supabaseClient) return;
+    const grid = document.getElementById('libraryGrid');
+    try {
+      const { data } = await supabaseClient
+        .from('books')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('is_available', true);
+      userBooks = data || [];
+      if (userBooks.length === 0) {
+        grid.innerHTML = '<div class="empty"><i class="fas fa-book"></i><div>Sin libros</div></div>';
+      } else {
+        grid.innerHTML = userBooks.map(b => `
+          <div class="book-card">
+            <div class="book-cover"><i class="fas fa-book"></i></div>
+            <div class="book-info">
+              <div class="book-title">${b.title}</div>
+              <div class="book-author">${b.author}</div>
+              <div class="badge">${b.condition}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      grid.innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><div>Error</div></div>';
+    }
+  }
+};
+
+const Matches = {
+  async load() {
+    if (!currentUser || !supabaseClient) return;
+    const container = document.getElementById('matchContainer');
+    try {
+      const { data } = await supabaseClient
+        .from('books')
+        .select('*')
+        .neq('user_id', currentUser.id)
+        .eq('is_available', true)
+        .limit(20);
+      matches = data || [];
+      if (matches.length === 0) {
+        container.innerHTML = '<div class="empty"><i class="fas fa-book-reader"></i><div>No hay matches</div></div>';
+      } else {
+        container.innerHTML = matches.map(b => `
+          <div class="book-card" onclick="Exchange.open('${b.id}','${b.user_id}')">
+            <div class="book-cover"><i class="fas fa-book"></i></div>
+            <div class="book-info">
+              <div class="book-title">${b.title}</div>
+              <div class="book-author">${b.author}</div>
+              <div class="badge">${b.condition}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      container.innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><div>Error</div></div>';
+    }
+  }
+};
+
+const Exchange = {
+  targetBook: null,
+  
+  open(bookId, ownerId) {
+    if (!currentUser) return toast('info', 'Inicia sesión');
+    this.targetBook = { id: bookId, owner_id: ownerId };
+    const select = document.getElementById('offerBookSelect');
+    select.innerHTML = '<option value="">Donar (+1 crédito)</option>' + 
+      userBooks.map(b => `<option value="${b.id}">${b.title}</option>`).join('');
+    document.getElementById('exchangeModal').classList.add('active');
+    document.body.classList.add('modal-open');
+  },
+  
+  async create() {
+    if (!this.targetBook) return toast('error', 'Sin libro objetivo');
+    const btn = document.getElementById('createExchangeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+    try {
+      const offeredId = document.getElementById('offerBookSelect').value || null;
+      const note = document.getElementById('exchangeNote').value;
+      
+      const { error } = await supabaseClient
+        .from('exchanges')
+        .insert({
+          requested_book_id: this.targetBook.id,
+          offered_book_id: offeredId,
+          owner_id: this.targetBook.owner_id,
+          requester_id: currentUser.id,
+          note,
+          status: 'proposed',
+          transaction_type: offeredId ? 'exchange' : 'donation'
+        });
+      if (error) throw error;
+      
+      await Notifications.create(this.targetBook.owner_id, 'exchange_proposed', 'Nueva propuesta', 'Tienes una nueva propuesta de intercambio');
+      
+      const { data: ownerProfile } = await supabaseClient
+        .from('profiles')
+        .select('whatsapp_phone')
+        .eq('id', this.targetBook.owner_id)
+        .single();
+      
+      if (ownerProfile?.whatsapp_phone) {
+        await WhatsApp.sendNotification(this.targetBook.owner_id, 'exchange_proposed', 'Nueva propuesta de intercambio en ILM');
+      }
+      
+      toast('success', 'Propuesta enviada');
+      Modals.close('exchangeModal');
+      this.list();
+    } catch (e) {
+      toast('error', 'Error al enviar');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar propuesta';
+    }
+  },
+  
+  async list() {
+    if (!currentUser || !supabaseClient) return;
+    const el = document.getElementById('exchangeList');
+    try {
+      const { data } = await supabaseClient
+        .from('exchanges')
+        .select('*')
+        .or(`owner_id.eq.${currentUser.id},requester_id.eq.${currentUser.id}`)
+        .in('status', ['proposed', 'accepted'])
+        .order('created_at', { ascending: false });
+      
+      if (!data || data.length === 0) {
+        el.innerHTML = '<div class="empty"><i class="fas fa-handshake"></i><div>No hay intercambios activos</div></div>';
+        return;
+      }
+      
+      el.innerHTML = data.map(ex => {
+        const isOwner = ex.owner_id === currentUser.id;
+        return `
+          <div class="exchange-card">
+            <div><span class="badge">${ex.status.toUpperCase()}</span> ${isOwner ? 'Recibida' : 'Enviada'}</div>
+            ${ex.note ? `<div class="hint" style="margin-top:.5rem">${ex.note}</div>` : ''}
+            <div style="margin-top:.75rem;display:flex;gap:.5rem">
+              ${ex.status === 'proposed' && isOwner ? `<button class="btn btn-primary" onclick="Exchange.accept('${ex.id}')">Aceptar</button>` : ''}
+              ${ex.status === 'accepted' ? `<button class="btn btn-primary" onclick="Exchange.confirm('${ex.id}')">Confirmar</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      el.innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><div>Error</div></div>';
+    }
+  },
+  
+  async accept(id) {
+    try {
+      const { data: exchange } = await supabaseClient
+        .from('exchanges')
+        .select('requester_id')
+        .eq('id', id)
+        .single();
+      
+      await supabaseClient
+        .from('exchanges')
+        .update({ status: 'accepted' })
+        .eq('id', id);
+      
+      await Notifications.create(exchange.requester_id, 'exchange_accepted', 'Intercambio aceptado', 'Tu propuesta ha sido aceptada');
+      
+      const { data: requesterProfile } = await supabaseClient
+        .from('profiles')
+        .select('whatsapp_phone')
+        .eq('id', exchange.requester_id)
+        .single();
+      
+      if (requesterProfile?.whatsapp_phone) {
+        await WhatsApp.sendNotification(exchange.requester_id, 'exchange_accepted', '¡Tu propuesta de intercambio ha sido aceptada en ILM!');
+      }
+      
+      toast('success', 'Intercambio aceptado');
+      this.list();
+    } catch (e) {
+      toast('error', 'Error al aceptar');
+    }
+  },
+  
+  async confirm(id) {
+    try {
+      const { data: exchange } = await supabaseClient
+        .from('exchanges')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      const isOwner = exchange.owner_id === currentUser.id;
+      const field = isOwner ? 'owner_confirmed' : 'requester_confirmed';
+      
+      await supabaseClient
+        .from('exchanges')
+        .update({ [field]: true })
+        .eq('id', id);
+      
+      const { data: check } = await supabaseClient
+        .from('exchanges')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (check.owner_confirmed && check.requester_confirmed) {
+        await supabaseClient
+          .from('exchanges')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', id);
+        
+        await Notifications.create(exchange.owner_id, 'exchange_completed', 'Intercambio completado', '¡Intercambio completado con éxito!');
+        await Notifications.create(exchange.requester_id, 'exchange_completed', 'Intercambio completado', '¡Intercambio completado con éxito!');
+        
+        toast('success', '¡Intercambio completado!');
+      } else {
+        toast('info', 'Confirmación registrada');
+      }
+      
+      this.list();
+      Books.loadMine();
+      Matches.load();
+    } catch (e) {
+      toast('error', 'Error al confirmar');
+    }
+  }
+};
+
+const Profile = {
+  async load() {
+    if (!currentUser || !supabaseClient) return;
+    const container = document.getElementById('profileContent');
+    try {
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+      
+      const whatsappStatus = data?.whatsapp_phone
+        ? `<div class="whatsapp-status connected"><i class="fab fa-whatsapp"></i> WhatsApp conectado<span class="whatsapp-phone-display">${data.whatsapp_phone}</span></div>`
+        : `<div class="whatsapp-status disconnected"><i class="fas fa-exclamation-circle"></i> WhatsApp no configurado</div>`;
+      
+      container.innerHTML = `
+        <div class="card">
+          <h4 style="margin:0 0 .5rem">${data.full_name || 'Usuario'}</h4>
+          <div class="hint">${currentUser.email}</div>
+          <div style="margin-top:.5rem">
+            <span class="zone-badge">${data.zone || 'Sin zona'}</span>
+            <span class="badge" style="margin-left:.5rem"><i class="fas fa-ticket-alt"></i> ${data.credits || 0} créditos</span>
+          </div>
+          ${whatsappStatus}
+          <button class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="WhatsApp.openConfig()">
+            <i class="fab fa-whatsapp"></i> ${data.whatsapp_phone ? 'Configurar' : 'Conectar'} WhatsApp
+          </button>
+        </div>
+      `;
+      
+      document.getElementById('userCredits').textContent = data.credits || 0;
+    } catch (e) {
+      container.innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><div>Error</div></div>';
+    }
+  }
+};
+
+const CommunityManager = {
+  async loadAdaptive() {
+    const discoveryCard = document.getElementById('discoveryCard');
+    if (discoveryCard) {
+      discoveryCard.innerHTML = `
+        <div class="row">
+          <div style="display:flex;align-items:center;gap:12px">
+            <i class="fas fa-users" style="font-size:2rem;color:var(--primary-wood)"></i>
+            <div>
+              <div style="font-weight:700">Grupos de Lectura</div>
+              <div class="hint">Conecta con otros lectores</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    const list = document.getElementById('availableGroupsList');
+    if (list) {
+      const groups = [
+        { name: 'Ficción Clásica', members: 45, icon: 'fas fa-book', whatsapp: 'https://chat.whatsapp.com/ejemplo1' },
+        { name: 'Ciencia Ficción', members: 32, icon: 'fas fa-rocket', whatsapp: 'https://chat.whatsapp.com/ejemplo2' },
+        { name: 'No Ficción', members: 28, icon: 'fas fa-brain', whatsapp: 'https://chat.whatsapp.com/ejemplo3' }
+      ];
+      
+      list.innerHTML = groups.map(g => `
+        <div class="group-card">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+            <i class="${g.icon}" style="color:var(--primary-wood)"></i>
+            <h5 style="margin:0">${g.name}</h5>
+          </div>
+          <div class="hint"><i class="fas fa-users"></i> ${g.members} miembros</div>
+          <button class="btn btn-primary" onclick="WhatsApp.joinGroup('${g.whatsapp}')" style="width:100%;margin-top:.75rem">
+            <i class="fab fa-whatsapp"></i> Unirme
+          </button>
+        </div>
+      `).join('');
+    }
+  }
+};
+
+async function setupAuthStateListener() {
+  if (!supabaseClient) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  currentUser = session?.user || null;
+  
+  const authEl = document.getElementById('auth');
+  const appEl = document.getElementById('app');
+  if (authEl) authEl.style.display = currentUser ? 'none' : 'grid';
+  if (appEl) appEl.style.display = currentUser ? 'block' : 'none';
+  
+  if (currentUser) {
+    await Profile.load();
+    await Books.loadMine();
+    await Matches.load();
+    await Notifications.load();
+    UI.showTab('matches');
+  }
+  
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    currentUser = session?.user || null;
+    if (authEl) authEl.style.display = currentUser ? 'none' : 'grid';
+    if (appEl) appEl.style.display = currentUser ? 'block' : 'none';
+    if (currentUser) {
+      await Profile.load();
+      await Books.loadMine();
+      await Matches.load();
+      await Notifications.load();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const initialized = initializeSupabase();
+  if (initialized) {
+    await setupAuthStateListener();
+  }
+  setTimeout(() => {
+    PasswordUI.attachChecklist('signupPassword', 'signupPwRules');
+  }, 100);
+});
+
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notificationsPanel');
+  const btn = document.querySelector('.notification-btn');
+  if (panel && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.remove('active');
+  }
+});
+</script>
 </body>
 </html>
